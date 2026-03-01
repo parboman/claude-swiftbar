@@ -288,7 +288,7 @@ extra = data.get("extra_usage")
 if extra and extra.get("is_enabled"):
     used = extra.get("used_credits", 0)
     limit = extra.get("monthly_limit", 0)
-    ep = int(extra.get("utilization", 0))
+    ep = int(extra.get("utilization") or 0)
     print("---")
     c = color_for(ep)
     print(f"Extra Credits: {CURRENCY}{used / 100:.2f} / {CURRENCY}{limit / 100:.0f} ({ep}%) | color={c}")
