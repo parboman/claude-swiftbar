@@ -80,6 +80,10 @@ The function receives the raw API data and a staleness flag. See `.claude-usage-
 
 The file is gitignored in this repo — perfect for private additions.
 
+## Troubleshooting
+
+**Phantom `?` in the menu bar:** SwiftBar tries to execute every file in the plugin folder. If you see an extra `?` icon, check for a `__pycache__/` directory — Python creates it when the extension is loaded, and stale `.pyc` files inside can get picked up by SwiftBar. Delete it: `rm -rf __pycache__/` and restart SwiftBar.
+
 ## Requirements
 
 - macOS (uses Keychain for credentials)
