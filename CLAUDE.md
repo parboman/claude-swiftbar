@@ -5,7 +5,7 @@ SwiftBar/xbar plugin that shows Claude Code usage in the macOS menu bar.
 ## Files
 
 - `claude-usage.5m.py` — the plugin (refreshes every 5 minutes)
-- `claude_usage_local.py` — local extensions (gitignored, optional)
+- `.claude_usage_local.py` — local extensions (dot-prefixed to hide from SwiftBar, gitignored, optional)
 - `.claude-usage-local.example.py` — extension template
 
 ## How It Works
@@ -18,7 +18,7 @@ SwiftBar/xbar plugin that shows Claude Code usage in the macOS menu bar.
 ## Key Design Decisions
 
 - **stdlib only** — no pip dependencies, just Python 3
-- **Extension hook** — `claude_usage_local.py` is imported at the end if present, letting users add private menu items without forking
+- **Extension hook** — `.claude_usage_local.py` is loaded via importlib at the end if present, letting users add private menu items without forking. Dot-prefixed so SwiftBar doesn't execute it as a separate plugin
 - **Cache** — stored at `~/.cache/claude-usage.json`, used as fallback when API fails
 - **CURRENCY constant** — defaults to `€`, change for your locale
 

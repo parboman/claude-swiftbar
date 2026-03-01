@@ -294,12 +294,18 @@ if extra and extra.get("is_enabled"):
     print(f"Extra Credits: {CURRENCY}{used / 100:.2f} / {CURRENCY}{limit / 100:.0f} ({ep}%) | color={c}")
     print(f"  {bar(ep)} | font=Menlo size=11")
 
-# Load local extensions (see .claude-usage-local.example.py)
+# Load local extensions — dot-prefixed to hide from SwiftBar
+# Place .claude_usage_local.py next to this plugin (see .claude-usage-local.example.py)
 try:
-    import claude_usage_local as _ext
-    if hasattr(_ext, "extend"):
-        _ext.extend(data=data, stale=stale)
-except ImportError:
+    import importlib.util
+    _ext_path = Path(__file__).parent / ".claude_usage_local.py"
+    if _ext_path.exists():
+        _spec = importlib.util.spec_from_file_location("_claude_usage_local", _ext_path)
+        _ext = importlib.util.module_from_spec(_spec)
+        _spec.loader.exec_module(_ext)
+        if hasattr(_ext, "extend"):
+            _ext.extend(data=data, stale=stale)
+except Exception:
     pass
 
 print("---")

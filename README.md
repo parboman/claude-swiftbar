@@ -67,7 +67,7 @@ The pacing icons tell you at a glance:
 
 ## Local Extensions
 
-You can add custom items to the dropdown without modifying the plugin. Create a `claude_usage_local.py` file next to the plugin:
+You can add custom items to the dropdown without modifying the plugin. Create a `.claude_usage_local.py` file next to the plugin (dot-prefixed so SwiftBar won't try to execute it as a separate plugin):
 
 ```python
 def extend(data, stale):
@@ -78,7 +78,7 @@ def extend(data, stale):
 
 The function receives the raw API data and a staleness flag. See `.claude-usage-local.example.py` for a full example.
 
-Extensions are loaded via `import`, so they must be valid Python modules (no dots in filename, proper `.py` extension). The file is gitignored in this repo — perfect for private additions.
+The file is gitignored in this repo — perfect for private additions.
 
 ## Requirements
 
