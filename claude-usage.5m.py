@@ -3,7 +3,7 @@
 # <xbar.version>v2.0</xbar.version>
 # <xbar.author>Pär Boman</xbar.author>
 # <xbar.desc>Shows Claude AI session and weekly usage in the menu bar</xbar.desc>
-# <swiftbar.refreshOnOpen>true</swiftbar.refreshOnOpen>
+# <swiftbar.refreshOnOpen>false</swiftbar.refreshOnOpen>
 
 import json
 import os
