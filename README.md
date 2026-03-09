@@ -80,6 +80,101 @@ The function receives the raw API data and a staleness flag. See `.claude-usage-
 
 The file is gitignored in this repo — perfect for private additions.
 
+## Context Window Monitoring (Optional)
+
+Monitor Claude Code's context window usage in real-time — see which sessions are active, how full they are, and get a warning when you're about to run out of space.
+
+### What You'll See
+
+**In the menu bar:** Context warnings light up when sessions get large
+```
+☕50% 👌32%           ← No warnings (all sessions <70%)
+☕50% 👌32% 🟡72%    ← One session at 72% (idle, 2h old)
+☕50% 👌32% 🟡72% 🟠85%  ← Two sessions need attention
+```
+
+**In the dropdown:** Full session list with activity status
+```
+Context Windows
+  🟢 42% (85k/200k) Opus [active]
+     ~/ai/tools/utilities
+  🟡 75% (150k/200k) Sonnet [idle] • 3h ago
+     ~/ai/projects/parpod
+  🟠 88% (176k/200k) Haiku [idle] ⚠️ SAVE! • 12h ago
+     ~/ai/tools/live
+```
+
+### Setup (Claude Code)
+
+The setup is two steps: create the status line hook + enable it in Claude Code settings.
+
+**1. Create the status line script**
+
+Open Claude Code and run this from your terminal (or paste into any Claude Code chat):
+
+```bash
+cat > ~/.claude/statusline.sh << 'EOF'
+#!/bin/bash
+INPUT=$(cat)
+PCT=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('context_window',{}).get('used_percentage','?'))" 2>/dev/null)
+USED=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('context_window',{}).get('used_tokens',0))" 2>/dev/null)
+LIMIT=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('context_window',{}).get('limit_tokens',0))" 2>/dev/null)
+SESSION=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('session_id','unknown'))" 2>/dev/null)
+MODEL=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('model','?'))" 2>/dev/null)
+CWD=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('cwd','?'))" 2>/dev/null)
+USED_K=$((USED / 1000))
+LIMIT_K=$((LIMIT / 1000))
+PCT_INT=$(printf "%.0f" "$PCT" 2>/dev/null || echo "?")
+if [ "$PCT_INT" != "?" ]; then
+    if [ "$PCT_INT" -ge 90 ]; then ICON="🔴"
+    elif [ "$PCT_INT" -ge 80 ]; then ICON="🟠"
+    elif [ "$PCT_INT" -ge 70 ]; then ICON="🟡"
+    else ICON="🟢"; fi
+else ICON="⚪"; fi
+TMPDIR="/tmp/claude-context"
+mkdir -p "$TMPDIR"
+python3 -c "
+import json, time
+data = {'session_id': '$SESSION', 'pct': $PCT, 'used_tokens': $USED, 'limit_tokens': $LIMIT, 'model': '$MODEL', 'cwd': '$CWD', 'ts': time.time()}
+with open('$TMPDIR/$SESSION.json', 'w') as f: json.dump(data, f)
+" 2>/dev/null
+echo "$ICON ${PCT_INT}% (${USED_K}k/${LIMIT_K}k)"
+EOF
+chmod +x ~/.claude/statusline.sh
+```
+
+**2. Register the hook in Claude Code settings**
+
+In Claude Code, open **Settings** → find or create `~/.claude/settings.json`, then add this block (if `statusLine` already exists, replace it):
+
+```json
+"statusLine": {
+  "type": "command",
+  "command": "~/.claude/statusline.sh"
+}
+```
+
+**That's it!** New Claude Code sessions will show a colored dot + context % in the terminal status line. SwiftBar will automatically pick up the context data on its next refresh (every 5 minutes).
+
+### How It Works
+
+- **Status line** — Each session reports its context percentage to a small temp file (`/tmp/claude-context/`)
+- **SwiftBar plugin** — Reads those files and displays the data in your menu bar + dropdown
+- **Color coding:**
+  - 🟢 0–69% — Safe, no warning
+  - 🟡 70–79% — Getting full, visible in menu bar
+  - 🟠 80–84% — Nearly full, visible in menu bar
+  - 🔴 90%+ — Critical, **save your work**
+  - ⚠️ 85%+ — **SAVE!** warning appears (you need ~10–15k tokens to save files)
+
+- **Active vs idle:**
+  - `[active]` — session updated in the last hour (colored text)
+  - `[idle]` — session last seen 1–24 hours ago (grayed out, shows "3h ago")
+
+### Monitoring Multiple Sessions
+
+The setup works great if you run multiple Claude Code windows at once — each one reports its usage independently. The dropdown shows all sessions from the last 24 hours, so you can see the full picture of your long-running work.
+
 ## Troubleshooting
 
 **Phantom `?` in the menu bar:** SwiftBar tries to execute every file in the plugin folder. If you see an extra `?` icon, check for a `__pycache__/` directory — Python creates it when the extension is loaded, and stale `.pyc` files inside can get picked up by SwiftBar. Delete it: `rm -rf __pycache__/` and restart SwiftBar.
